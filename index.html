@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBC 2016 Multi-Occupancy PHE & Pump Design Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Print Stylesheet rules for clean PDF exports -->
+    <style>
+        @media print {
+            body { background-color: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+            input, select { border: none !important; background: transparent !important; padding: 0 !important; color: black !important; }
+            .print-break-inside { break-inside: avoid; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Top Header -->
+    <header class="bg-slate-950 border-b border-slate-800 text-white shadow-md no-print">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+                <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-lg">PHE</div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight">Multi-Occupancy Building Water & Pump Calculator</h1>
+                    <p class="text-xs text-slate-400">Compliant with NBC 2016 (Part 9 - Plumbing Services)</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    <span>Export Clean Report to PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Print-Only Report Header -->
+    <div class="print-only max-w-7xl mx-auto px-6 pt-6 mb-4">
+        <div class="border-b-2 border-slate-900 pb-4 flex justify-between items-end">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">Public Health Engineering (PHE) Design Report</h1>
+                <p class="text-sm text-slate-600">Multi-Occupancy Water Storage Sizing, Dimensions & Pump Head Calculations per NBC 2016</p>
+            </div>
+            <div class="text-right text-xs text-slate-500">
+                <p>Generated on: <span id="print-date"></span></p>
+                <p>Standard: National Building Code of India 2016</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="max-w-7xl mx-auto px-4 py-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+        
+        <!-- Left Column: Inputs -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Occupancy Selector -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5">
+                <h2 class="text-base font-bold text-white mb-2">1. Select Building Occupancy Type</h2>
+                <select id="occupancy_type" onchange="toggleOccupancyInputs(); calculatePHE();" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="residential">Residential Buildings</option>
+                    <option value="office">Offices</option>
+                    <option value="hospital">Hospitals</option>
+                    <option value="hotel">Hotels</option>
+                    <option value="hostel">Hostels</option>
+                    <option value="school">Schools / Educational</option>
+                    <option value="mercantile">Mercantile / Retail</option>
+                    <option value="traffic">Traffic Terminal Stations</option>
+                </select>
+            </div>
+
+            <!-- 1. Residential Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5" id="panel_residential">
+                <h2 class="text-base font-bold text-white mb-1 flex items-center justify-between">
+                    <span>Residential Accommodation</span>
+                    <span class="text-xs bg-blue-900 text-blue-200 font-semibold px-2 py-0.5 rounded border border-blue-700">NBC Table a</span>
+                </h2>
+                <p class="text-xs text-slate-400 mb-4">Studio=2P, EWS=4P, 1BHK=4P, 2BHK=5P, 3BHK=6P, 4BHK+=7P</p>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/60">
+                        <div><span class="font-medium text-slate-200 text-sm">Studio / EWS</span><span class="block text-xs text-slate-400">2 to 4 Persons</span></div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="count_studio" min="0" value="0" oninput="calculatePHE()" class="w-16 text-center bg-slate-800 text-white border border-slate-600 rounded-md py-1 text-sm">
+                            <span class="text-xs text-slate-400 w-10 text-right"><span id="pop_studio">0</span> P</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/60">
+                        <div><span class="font-medium text-slate-200 text-sm">1 BHK Unit</span><span class="block text-xs text-slate-400">4 Persons</span></div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="count_1bhk" min="0" value="10" oninput="calculatePHE()" class="w-16 text-center bg-slate-800 text-white border border-slate-600 rounded-md py-1 text-sm">
+                            <span class="text-xs text-slate-400 w-10 text-right"><span id="pop_1bhk">40</span> P</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/60">
+                        <div><span class="font-medium text-slate-200 text-sm">2 BHK Unit</span><span class="block text-xs text-slate-400">5 Persons</span></div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="count_2bhk" min="0" value="15" oninput="calculatePHE()" class="w-16 text-center bg-slate-800 text-white border border-slate-600 rounded-md py-1 text-sm">
+                            <span class="text-xs text-slate-400 w-10 text-right"><span id="pop_2bhk">75</span> P</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/60">
+                        <div><span class="font-medium text-slate-200 text-sm">3 BHK Unit</span><span class="block text-xs text-slate-400">6 Persons</span></div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="count_3bhk" min="0" value="5" oninput="calculatePHE()" class="w-16 text-center bg-slate-800 text-white border border-slate-600 rounded-md py-1 text-sm">
+                            <span class="text-xs text-slate-400 w-10 text-right"><span id="pop_3bhk">30</span> P</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/60">
+                        <div><span class="font-medium text-slate-200 text-sm">4 BHK & Above</span><span class="block text-xs text-slate-400">7 Persons</span></div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="count_4bhk" min="0" value="0" oninput="calculatePHE()" class="w-16 text-center bg-slate-800 text-white border border-slate-600 rounded-md py-1 text-sm">
+                            <span class="text-xs text-slate-400 w-10 text-right"><span id="pop_4bhk">0</span> P</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-700 flex justify-between items-center text-sm font-semibold">
+                    <span class="text-slate-300">Total Population:</span>
+                    <span id="total_population_res" class="text-blue-400 text-base">145 Persons</span>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-700">
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Consumption Standard (LPCD)</label>
+                    <select id="lpcd_standard" onchange="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                        <option value="135">135 LPCD (Standard Residential)</option>
+                        <option value="150">150 LPCD (Higher Standard)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 2. Offices Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_office">
+                <h2 class="text-base font-bold text-white mb-1">Offices Population Formula</h2>
+                <p class="text-xs text-slate-400 mb-4">NBC Standard: 1 person per 10 m² of floor area</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Total Built-Up / Floor Area (m²)</label>
+                        <input type="number" id="office_area" min="10" value="2500" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div class="text-xs text-blue-300 pt-1">Calculated Office Population: <span id="pop_office_calc" class="font-bold">250</span> Persons</div>
+                </div>
+            </div>
+
+            <!-- 3. Hospitals Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_hospital">
+                <h2 class="text-base font-bold text-white mb-1">Hospitals Population Formula</h2>
+                <p class="text-xs text-slate-400 mb-4">Beds + Staff + Attendants (Secondary: 5 density, Tertiary: 7, Quaternary: 9)</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Number of Inpatient Beds</label>
+                        <input type="number" id="hosp_beds" min="0" value="100" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Number of Staff & Medical Personnel</label>
+                        <input type="number" id="hosp_staff" min="0" value="60" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Hospital Care Tier / Attendant Density</label>
+                        <select id="hosp_tier" onchange="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                            <option value="5">Secondary Care (Density 5 per bed)</option>
+                            <option value="7">Tertiary Care (Density 7 per bed)</option>
+                            <option value="9">Quaternary Care (Density 9 per bed)</option>
+                        </select>
+                    </div>
+                    <div class="text-xs text-blue-300 pt-1">Total Hospital Population: <span id="pop_hosp_calc" class="font-bold">660</span> Persons</div>
+                </div>
+            </div>
+
+            <!-- 4. Hotels Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_hotel">
+                <h2 class="text-base font-bold text-white mb-1">Hotels Population Formula</h2>
+                <p class="text-xs text-slate-400 mb-4">Number of beds + Staff + Requirement of restaurant seats</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Number of Hotel Beds / Rooms</label>
+                        <input type="number" id="hotel_beds" min="0" value="80" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Number of Hotel Staff</label>
+                        <input type="number" id="hotel_staff" min="0" value="30" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Restaurant Seats (External/Visitors)</label>
+                        <input type="number" id="hotel_seats" min="0" value="50" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div class="text-xs text-blue-300 pt-1">Total Hotel Population: <span id="pop_hotel_calc" class="font-bold">160</span> Persons</div>
+                </div>
+            </div>
+
+            <!-- 5. Hostels Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_hostel">
+                <h2 class="text-base font-bold text-white mb-1">Hostels Population Formula</h2>
+                <p class="text-xs text-slate-400 mb-4">Number of beds + 4.5 × (warden’s residence) + staff</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Number of Hostel Beds</label>
+                        <input type="number" id="hostel_beds" min="0" value="120" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Warden Residences (Units)</label>
+                        <input type="number" id="hostel_warden" min="0" value="2" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Support Staff</label>
+                        <input type="number" id="hostel_staff" min="0" value="10" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div class="text-xs text-blue-300 pt-1">Total Hostel Population: <span id="pop_hostel_calc" class="font-bold">139</span> Persons</div>
+                </div>
+            </div>
+
+            <!-- 6. Schools / Educational Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_school">
+                <h2 class="text-base font-bold text-white mb-1">Schools Population Formula</h2>
+                <p class="text-xs text-slate-400 mb-4">Strength of school + Teaching & non-teaching staff</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Total Student Strength</label>
+                        <input type="number" id="school_strength" min="0" value="600" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Teaching & Non-Teaching Staff</label>
+                        <input type="number" id="school_staff" min="0" value="45" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div class="text-xs text-blue-300 pt-1">Total Educational Population: <span id="pop_school_calc" class="font-bold">645</span> Persons</div>
+                </div>
+            </div>
+
+            <!-- 7. Mercantile / Retail Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_mercantile">
+                <h2 class="text-base font-bold text-white mb-1">Mercantile / Retail Formula</h2>
+                <p class="text-xs text-slate-400 mb-4">1 per 3m² street/sales basement + 1 per 6m² upper floors (10% fixed, 90% floating)</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Street Floor & Basement Sales Area (m²)</label>
+                        <input type="number" id="merc_ground_area" min="0" value="500" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Upper Sales Floor Area (m²)</label>
+                        <input type="number" id="merc_upper_area" min="0" value="1200" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div class="text-xs text-blue-300 pt-1">Total Mercantile Population: <span id="pop_merc_calc" class="font-bold">367</span> Persons</div>
+                </div>
+            </div>
+
+            <!-- 8. Traffic Terminal Stations Panel -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_traffic">
+                <h2 class="text-base font-bold text-white mb-1">Traffic Terminals Formula</h2>
+                <p class="text-xs text-slate-400 mb-4">(Annual Passenger Traffic / 365) + Staff + Vendors</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Annual Passenger Traffic Volume</label>
+                        <input type="number" id="traffic_annual" min="0" value="3650000" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Staff & Vendors Count</label>
+                        <input type="number" id="traffic_staff" min="0" value="120" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div class="text-xs text-blue-300 pt-1">Equivalent Daily Population: <span id="pop_traffic_calc" class="font-bold">1,120</span> Persons</div>
+                </div>
+            </div>
+
+            <!-- Tank & Building Height Parameters -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 space-y-4">
+                <h2 class="text-base font-bold text-white mb-1">2. Tank Heights & Building Dimensions</h2>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">UG Tank Height (m)</label>
+                        <input type="number" id="ug_height" value="2.5" step="0.1" min="0.5" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">OH Tank Height (m)</label>
+                        <input type="number" id="oh_height" value="2.0" step="0.1" min="0.5" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Total Building Height (Ground to Terrace Inlet) (m)</label>
+                    <input type="number" id="bldg_height" value="45.0" step="0.5" min="3.0" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">UG Depth (m)</label>
+                        <input type="number" id="ug_depth" value="3.0" step="0.5" min="0" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Friction (%)</label>
+                        <input type="number" id="friction_pct" value="15" step="1" min="5" max="30" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Pump Hrs</label>
+                        <input type="number" id="pump_hours" value="4.0" step="0.5" min="1" max="12" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Results & Analytics Output -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Daily Demand Summary Card -->
+            <div class="bg-gradient-to-br from-blue-900 to-slate-900 rounded-xl shadow-md text-white p-6 border border-blue-800">
+                <h2 class="text-xs uppercase tracking-widest text-blue-300 font-semibold mb-1">Water Demand Summary</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-baseline mb-4">
+                    <div class="text-3xl font-extrabold tracking-tight" id="val_daily_demand">19,575 L</div>
+                    <div class="text-sm text-blue-200 mt-1 sm:mt-0">Design Rate: <span id="disp_rate_summary">135</span> LPCD</div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 pt-4 border-t border-blue-800/60 text-center">
+                    <div class="bg-white/10 p-2.5 rounded-lg">
+                        <span class="block text-xs text-blue-300 mb-0.5">Flushing Split</span>
+                        <span class="text-base font-bold" id="split_flushing">6,525 L</span>
+                    </div>
+                    <div class="bg-white/10 p-2.5 rounded-lg">
+                        <span class="block text-xs text-blue-300 mb-0.5">Drinking / Other</span>
+                        <span class="text-base font-bold" id="split_drinking">2,900 L</span>
+                    </div>
+                    <div class="bg-white/10 p-2.5 rounded-lg">
+                        <span class="block text-xs text-blue-300 mb-0.5">Domestic Split</span>
+                        <span class="text-base font-bold" id="split_domestic">10,150 L</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tank Sizing & Dimensions Results Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Underground Tank Card -->
+                <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 flex flex-col justify-between print-break-inside">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-bold text-white text-base">Underground Tank</h3>
+                            <span class="text-xs bg-emerald-950 text-emerald-300 font-semibold px-2 py-0.5 rounded border border-emerald-800">2 Days Storage</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                                <span class="text-slate-400">Required Volume:</span>
+                                <span class="font-bold text-white" id="res_ug_vol">39,150 Liters</span>
+                            </div>
+                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                                <span class="text-slate-400">Volume in Cubic Meters:</span>
+                                <span class="font-semibold text-slate-200" id="res_ug_m3">39.15 m³</span>
+                            </div>
+                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                                <span class="text-slate-400">Min Floor Area Required:</span>
+                                <span class="font-semibold text-slate-200" id="res_ug_area">15.66 m²</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Suggested Internal Dimensions (Square Tank)</span>
+                        <div class="text-sm font-mono text-blue-300 font-medium" id="res_ug_dims">
+                            Length: 3.96 m × Width: 3.96 m × Height: 2.50 m
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overhead Tank Card -->
+                <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 flex flex-col justify-between print-break-inside">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-bold text-white text-base">Overhead Tank</h3>
+                            <span class="text-xs bg-amber-950 text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-800">1 Day Storage</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                                <span class="text-slate-400">Required Volume:</span>
+                                <span class="font-bold text-white" id="res_oh_vol">19,575 Liters</span>
+                            </div>
+                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                                <span class="text-slate-400">Volume in Cubic Meters:</span>
+                                <span class="font-semibold text-slate-200" id="res_oh_m3">19.58 m³</span>
+                            </div>
+                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                                <span class="text-slate-400">Min Floor Area Required:</span>
+                                <span class="font-semibold text-slate-200" id="res_oh_area">9.79 m²</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Suggested Internal Dimensions (Square Tank)</span>
+                        <div class="text-sm font-mono text-blue-300 font-medium" id="res_oh_dims">
+                            Length: 3.13 m × Width: 3.13 m × Height: 2.00 m
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Pump Head & Motor Power Sizing Card -->
+            <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6 print-break-inside">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-bold text-white text-base">Pump Head & Motor Power Sizing</h3>
+                        <p class="text-xs text-slate-400">Transfer Pump Sizing (Underground Tank to Terrace Overhead Tank)</p>
+                    </div>
+                    <span class="text-xs bg-purple-950 text-purple-300 font-semibold px-2.5 py-1 rounded border border-purple-800">Hydraulic Design</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                        <span class="block text-xs text-slate-400 mb-0.5">Total Static Head</span>
+                        <span class="text-lg font-bold text-white" id="res_static_head">48.00 m</span>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                        <span class="block text-xs text-slate-400 mb-0.5">Friction Losses</span>
+                        <span class="text-lg font-bold text-white" id="res_friction_loss">7.20 m</span>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                        <span class="block text-xs text-slate-400 mb-0.5">Total Manometric Head</span>
+                        <span class="text-lg font-bold text-blue-400" id="res_tmh">55.20 m</span>
+                    </div>
+                    <div class="bg-blue-950/70 p-3 rounded-lg border border-blue-800">
+                        <span class="block text-xs text-blue-300 font-semibold mb-0.5">Recommended Motor Power</span>
+                        <span class="text-lg font-extrabold text-white" id="res_hp">5.0 HP</span>
+                        <span class="block text-[10px] text-blue-300" id="res_flow_rate">Flow: 82 Lpm</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-4 text-center text-xs text-slate-400 no-print mt-8">
+        <p>Built for MEP/PHE Professional Design Calculations &bull; Reference: National Building Code of India (NBC 2016)</p>
+    </footer>
+
+    <!-- Calculation Engine Script -->
+    <script>
+        document.getElementById('print-date').innerText = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+
+        function toggleOccupancyInputs() {
+            const occ = document.getElementById('occupancy_type').value;
+            const panels = ['residential', 'office', 'hospital', 'hotel', 'hostel', 'school', 'mercantile', 'traffic'];
+            panels.forEach(p => {
+                document.getElementById('panel_' + p).classList.add('hidden');
+            });
+            document.getElementById('panel_' + occ).classList.remove('hidden');
+        }
+
+        function calculatePHE() {
+            const occ = document.getElementById('occupancy_type').value;
+            let totalPop = 0;
+            let lpcd = 135;
+            let flushRate = 45;
+            let drinkRate = 20;
+            let domesticRate = 70;
+
+            if (occ === 'residential') {
+                const cStudio = parseInt(document.getElementById('count_studio').value) || 0;
+                const c1 = parseInt(document.getElementById('count_1bhk').value) || 0;
+                const c2 = parseInt(document.getElementById('count_2bhk').value) || 0;
+                const c3 = parseInt(document.getElementById('count_3bhk').value) || 0;
+                const c4 = parseInt(document.getElementById('count_4bhk').value) || 0;
+
+                const pStudio = cStudio * 2;
+                const p1 = c1 * 4, p2 = c2 * 5, p3 = c3 * 6, p4 = c4 * 7;
+                totalPop = pStudio + p1 + p2 + p3 + p4;
+
+                document.getElementById('pop_studio').innerText = pStudio;
+                document.getElementById('pop_1bhk').innerText = p1;
+                document.getElementById('pop_2bhk').innerText = p2;
+                document.getElementById('pop_3bhk').innerText = p3;
+                document.getElementById('pop_4bhk').innerText = p4;
+                document.getElementById('total_population_res').innerText = totalPop + ' Persons';
+
+                lpcd = parseInt(document.getElementById('lpcd_standard').value);
+                flushRate = 45;
+                drinkRate = (lpcd === 135) ? 20 : 15;
+                domesticRate = lpcd - flushRate - drinkRate;
+            } 
+            else if (occ === 'office') {
+                const area = parseFloat(document.getElementById('office_area').value) || 0;
+                // NBC Rule: 1 person per 10 m² of floor area
+                totalPop = Math.ceil(area / 10);
+                document.getElementById('pop_office_calc').innerText = totalPop;
+                lpcd = 45; // Offices standard NBC rate
+                flushRate = 20;
+                drinkRate = 0;
+                domesticRate = 25;
+            }
+            else if (occ === 'hospital') {
+                const beds = parseInt(document.getElementById('hosp_beds').value) || 0;
+                const staff = parseInt(document.getElementById('hosp_staff').value) || 0;
+                const density = parseInt(document.getElementById('hosp_tier').value) || 5;
+                // NBC Rule: Beds + Staff + (Beds * density for attendants)
+                totalPop = beds + staff + (beds * density);
+                document.getElementById('pop_hosp_calc').innerText = totalPop;
+                lpcd = beds > 100 ? 450 : 340; // 340 for <=100 beds, 450 for >100 beds
+                flushRate = 110;
+                drinkRate = 0;
+                domesticRate = lpcd - flushRate;
+            }
+            else if (occ === 'hotel') {
+                const beds = parseInt(document.getElementById('hotel_beds').value) || 0;
+                const staff = parseInt(document.getElementById('hotel_staff').value) || 0;
+                const seats = parseInt(document.getElementById('hotel_seats').value) || 0;
+                // NBC Rule: Beds + Staff + restaurant seats requirement
+                totalPop = beds + staff + seats;
+                document.getElementById('pop_hotel_calc').innerText = totalPop;
+                lpcd = 180; // Standard hotel rate
+                flushRate = 60;
+                drinkRate = 0;
+                domesticRate = lpcd - flushRate;
+            }
+            else if (occ === 'hostel') {
+                const beds = parseInt(document.getElementById('hostel_beds').value) || 0;
+                const warden = parseInt(document.getElementById('hostel_warden').value) || 0;
+                const staff = parseInt(document.getElementById('hostel_staff').value) || 0;
+                // NBC Rule: Beds + 4.5 * (warden's residence) + staff
+                totalPop = Math.ceil(beds + (4.5 * warden) + staff);
+                document.getElementById('pop_hostel_calc').innerText = totalPop;
+                lpcd = 135;
+                flushRate = 45;
+                drinkRate = 20;
+                domesticRate = 70;
+            }
+            else if (occ === 'school') {
+                const strength = parseInt(document.getElementById('school_strength').value) || 0;
+                const staff = parseInt(document.getElementById('school_staff').value) || 0;
+                // NBC Rule: Strength of school + Teaching and non-teaching staff
+                totalPop = strength + staff;
+                document.getElementById('pop_school_calc').innerText = totalPop;
+                lpcd = 45; // Day school rate
+                flushRate = 20;
+                drinkRate = 0;
+                domesticRate = 25;
+            }
+            else if (occ === 'mercantile') {
+                const groundArea = parseFloat(document.getElementById('merc_ground_area').value) || 0;
+                const upperArea = parseFloat(document.getElementById('merc_upper_area').value) || 0;
+                // NBC Rule: 1 person per 3m² street/sales basement + 1 person per 6m² upper floors
+                totalPop = Math.ceil((groundArea / 3) + (upperArea / 6));
+                document.getElementById('pop_merc_calc').innerText = totalPop;
+                lpcd = 45; // Mercantile rate
+                flushRate = 15;
+                drinkRate = 0;
+                domesticRate = 30;
+            }
+            else if (occ === 'traffic') {
+                const annualTraffic = parseFloat(document.getElementById('traffic_annual').value) || 0;
+                const staff = parseFloat(document.getElementById('traffic_staff').value) || 0;
+                // NBC Rule: (Annual passenger traffic / 365) + Staff + Vendors
+                totalPop = Math.ceil((annualTraffic / 365) + staff);
+                document.getElementById('pop_traffic_calc').innerText = totalPop.toLocaleString('en-IN');
+                lpcd = 15; // Traffic terminal rate (shorter duration users)
+                flushRate = 5;
+                drinkRate = 0;
+                domesticRate = 10;
+            }
+
+            document.getElementById('disp_rate_summary').innerText = lpcd;
+
+            // Daily Demand Calculations
+            const dailyDemand = totalPop * lpcd;
+            const flushTotal = totalPop * flushRate;
+            const drinkTotal = totalPop * drinkRate;
+            const domesticTotal = totalPop * domesticRate;
+
+            document.getElementById('val_daily_demand').innerText = dailyDemand.toLocaleString('en-IN') + ' L';
+            document.getElementById('split_flushing').innerText = flushTotal.toLocaleString('en-IN') + ' L';
+            document.getElementById('split_drinking').innerText = drinkTotal.toLocaleString('en-IN') + ' L';
+            document.getElementById('split_domestic').innerText = domesticTotal.toLocaleString('en-IN') + ' L';
+
+            // Storage Sizing (UG Tank = 2 Days, OH Tank = 1 Day)
+            const ugVol = dailyDemand * 2;
+            const ohVol = dailyDemand * 1;
+
+            const ugM3 = ugVol / 1000;
+            const ohM3 = ohVol / 1000;
+
+            document.getElementById('res_ug_vol').innerText = ugVol.toLocaleString('en-IN') + ' Liters';
+            document.getElementById('res_ug_m3').innerText = ugM3.toFixed(2) + ' m³';
+
+            document.getElementById('res_oh_vol').innerText = ohVol.toLocaleString('en-IN') + ' Liters';
+            document.getElementById('res_oh_m3').innerText = ohM3.toFixed(2) + ' m³';
+
+            // Tank Dimensions & Footprint Area
+            const ugHeight = parseFloat(document.getElementById('ug_height').value) || 2.5;
+            const ohHeight = parseFloat(document.getElementById('oh_height').value) || 2.0;
+
+            const ugArea = ugM3 / ugHeight;
+            const ohArea = ohM3 / ohHeight;
+
+            document.getElementById('res_ug_area').innerText = ugArea.toFixed(2) + ' m²';
+            document.getElementById('res_oh_area').innerText = ohArea.toFixed(2) + ' m²';
+
+            const ugSide = Math.sqrt(ugArea);
+            const ohSide = Math.sqrt(ohArea);
+
+            document.getElementById('res_ug_dims').innerText = `Length: ${ugSide.toFixed(2)} m × Width: ${ugSide.toFixed(2)} m × Height: ${ugHeight.toFixed(2)} m`;
+            document.getElementById('res_oh_dims').innerText = `Length: ${ohSide.toFixed(2)} m × Width: ${ohSide.toFixed(2)} m × Height: ${ohHeight.toFixed(2)} m`;
+
+            // Pump Sizing
+            const bldgHeight = parseFloat(document.getElementById('bldg_height').value) || 45.0;
+            const ugDepth = parseFloat(document.getElementById('ug_depth').value) || 3.0;
+            const frictionPct = parseFloat(document.getElementById('friction_pct').value) || 15;
+            const pumpHours = parseFloat(document.getElementById('pump_hours').value) || 4.0;
+
+            const staticHead = bldgHeight + ugDepth;
+            const frictionLoss = staticHead * (frictionPct / 100);
+            const tmh = staticHead + frictionLoss;
+
+            document.getElementById('res_static_head').innerText = staticHead.toFixed(2) + ' m';
+            document.getElementById('res_friction_loss').innerText = frictionLoss.toFixed(2) + ' m';
+            document.getElementById('res_tmh').innerText = tmh.toFixed(2) + ' m';
+
+            const flowLpm = ohVol / (pumpHours * 60);
+            const qM3s = (flowLpm / 1000) / 60;
+            const hydraulicKw = (qM3s * 1000 * 9.81 * tmh) / 1000;
+            const shaftKw = hydraulicKw / 0.425;
+            const mechanicalHp = shaftKw * 1.34102 * 1.2;
+
+            let standardHp = 0.5;
+            const hpSteps = [0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 7.5, 10.0, 12.5, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0];
+            for (let hp of hpSteps) {
+                if (mechanicalHp <= hp) {
+                    standardHp = hp;
+                    break;
+                }
+                standardHp = hp;
+            }
+
+            document.getElementById('res_hp').innerText = standardHp.toFixed(1) + ' HP';
+            document.getElementById('res_flow_rate').innerText = `Flow: ${Math.round(flowLpm)} Lpm (${pumpHours} hrs op.)`;
+        }
+
+        window.onload = () => {
+            toggleOccupancyInputs();
+            calculatePHE();
+        };
+    </script>
+</body>
+</html>
