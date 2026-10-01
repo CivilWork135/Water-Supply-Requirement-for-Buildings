@@ -48,7 +48,7 @@
                 <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-lg">PHE</div>
                 <div>
                     <h1 class="text-lg font-bold tracking-tight">Multi-Occupancy Building Water & Pump Calculator</h1>
-                    <p class="text-xs text-slate-400">Compliant with NBC 2016 (Part 9 - Plumbing Services)</p>
+                    <p class="text-xs text-slate-400">Compliant with NBC 2016 (Part 9 Plumbing & Part 4 Fire Safety)</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -67,11 +67,11 @@
         <div class="border-b-2 border-slate-900 pb-4 flex justify-between items-end">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Public Health Engineering (PHE) Design Report</h1>
-                <p class="text-sm text-slate-600">Multi-Occupancy Water Storage Sizing, Dimensions & Pump Head Calculations per NBC 2016</p>
+                <p class="text-sm text-slate-600">Water Storage Sizing (Domestic + NBC Table 7 Fire Reserve), Dimensions & Pumps per NBC 2016</p>
             </div>
             <div class="text-right text-xs text-slate-500">
                 <p>Generated on: <span id="print-date"></span></p>
-                <p>Standard: National Building Code of India 2016</p>
+                <p>Standard: National Building Code of India 2016 (Part 4 & Part 9)</p>
             </div>
         </div>
     </div>
@@ -257,7 +257,7 @@
             <!-- 7. Mercantile / Retail Panel -->
             <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 hidden" id="panel_mercantile">
                 <h2 class="text-base font-bold text-white mb-1">Mercantile / Retail Formula</h2>
-                <p class="text-xs text-slate-400 mb-4">1 per 3m² street/sales basement + 1 per 6m² upper floors (10% fixed, 90% floating)</p>
+                <p class="text-xs text-slate-400 mb-4">1 per 3m² street/sales basement + 1 per 6m² upper floors</p>
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Street Floor & Basement Sales Area (m²)</label>
@@ -288,9 +288,9 @@
                 </div>
             </div>
 
-            <!-- Tank & Building Height Parameters -->
+            <!-- Tank, Building Height & Fire Reserve Parameters -->
             <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 space-y-4">
-                <h2 class="text-base font-bold text-white mb-1">2. Tank Heights & Building Dimensions</h2>
+                <h2 class="text-base font-bold text-white mb-1">2. Tank Heights, Building & Fire Parameters</h2>
                 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -320,6 +320,20 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Pump Hrs</label>
                         <input type="number" id="pump_hours" value="4.0" step="0.5" min="1" max="12" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-2 text-sm">
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-700">
+                    <label class="block text-xs font-semibold text-red-400 uppercase tracking-wider mb-1">Fire Reserve Overrides (NBC Table 7)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="block text-[10px] text-slate-400">UG Fire Tank (L)</span>
+                            <input type="number" id="override_ug_fire" value="" placeholder="Auto (NBC)" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-1.5 text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-400">Terrace Fire Tank (L)</span>
+                            <input type="number" id="override_terrace_fire" value="" placeholder="Auto (NBC)" oninput="calculatePHE()" class="w-full bg-slate-900 text-white border border-slate-600 rounded-md p-1.5 text-xs">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,29 +367,37 @@
                 </div>
             </div>
 
-            <!-- Tank Sizing & Dimensions Results Grid -->
+            <!-- Tank Sizing & Dimensions Results Grid (Combined Domestic + Fire) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                <!-- Underground Tank Card -->
+                <!-- Underground Tank Card (Combined) -->
                 <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 flex flex-col justify-between print-break-inside">
                     <div>
                         <div class="flex justify-between items-start mb-3">
                             <h3 class="font-bold text-white text-base">Underground Tank</h3>
-                            <span class="text-xs bg-emerald-950 text-emerald-300 font-semibold px-2 py-0.5 rounded border border-emerald-800">2 Days Storage</span>
+                            <span class="text-xs bg-emerald-950 text-emerald-300 font-semibold px-2 py-0.5 rounded border border-emerald-800">Domestic (2 Days) + Fire</span>
                         </div>
                         
-                        <div class="space-y-2 mb-4">
-                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
-                                <span class="text-slate-400">Required Volume:</span>
-                                <span class="font-bold text-white" id="res_ug_vol">39,150 Liters</span>
+                        <div class="space-y-2 mb-4 text-sm">
+                            <div class="flex justify-between py-1 border-b border-slate-700 text-slate-400">
+                                <span>Domestic Storage (2 Days):</span>
+                                <span class="font-semibold text-slate-200" id="res_ug_dom">39,150 L</span>
                             </div>
-                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                            <div class="flex justify-between py-1 border-b border-slate-700 text-red-300">
+                                <span>NBC Table 7 Fire Static Reserve:</span>
+                                <span class="font-semibold" id="res_ug_fire">100,000 L</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-700 text-base font-bold text-white">
+                                <span>Total Combined UG Volume:</span>
+                                <span class="text-emerald-400" id="res_ug_vol">139,150 Liters</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-700">
                                 <span class="text-slate-400">Volume in Cubic Meters:</span>
-                                <span class="font-semibold text-slate-200" id="res_ug_m3">39.15 m³</span>
+                                <span class="font-semibold text-slate-200" id="res_ug_m3">139.15 m³</span>
                             </div>
-                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                            <div class="flex justify-between py-1 border-b border-slate-700">
                                 <span class="text-slate-400">Min Floor Area Required:</span>
-                                <span class="font-semibold text-slate-200" id="res_ug_area">15.66 m²</span>
+                                <span class="font-semibold text-slate-200" id="res_ug_area">55.66 m²</span>
                             </div>
                         </div>
                     </div>
@@ -383,31 +405,39 @@
                     <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
                         <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Suggested Internal Dimensions (Square Tank)</span>
                         <div class="text-sm font-mono text-blue-300 font-medium" id="res_ug_dims">
-                            Length: 3.96 m × Width: 3.96 m × Height: 2.50 m
+                            Length: 7.46 m × Width: 7.46 m × Height: 2.50 m
                         </div>
                     </div>
                 </div>
 
-                <!-- Overhead Tank Card -->
+                <!-- Overhead Tank Card (Combined) -->
                 <div class="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-5 flex flex-col justify-between print-break-inside">
                     <div>
                         <div class="flex justify-between items-start mb-3">
                             <h3 class="font-bold text-white text-base">Overhead Tank</h3>
-                            <span class="text-xs bg-amber-950 text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-800">1 Day Storage</span>
+                            <span class="text-xs bg-amber-950 text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-800">Domestic (1 Day) + Fire</span>
                         </div>
                         
-                        <div class="space-y-2 mb-4">
-                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
-                                <span class="text-slate-400">Required Volume:</span>
-                                <span class="font-bold text-white" id="res_oh_vol">19,575 Liters</span>
+                        <div class="space-y-2 mb-4 text-sm">
+                            <div class="flex justify-between py-1 border-b border-slate-700 text-slate-400">
+                                <span>Domestic Storage (1 Day):</span>
+                                <span class="font-semibold text-slate-200" id="res_oh_dom">19,575 L</span>
                             </div>
-                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                            <div class="flex justify-between py-1 border-b border-slate-700 text-red-300">
+                                <span>NBC Table 7 Terrace Fire Reserve:</span>
+                                <span class="font-semibold" id="res_oh_fire">10,000 L</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-700 text-base font-bold text-white">
+                                <span>Total Combined OH Volume:</span>
+                                <span class="text-amber-400" id="res_oh_vol">29,575 Liters</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-700">
                                 <span class="text-slate-400">Volume in Cubic Meters:</span>
-                                <span class="font-semibold text-slate-200" id="res_oh_m3">19.58 m³</span>
+                                <span class="font-semibold text-slate-200" id="res_oh_m3">29.58 m³</span>
                             </div>
-                            <div class="flex justify-between text-sm py-1 border-b border-slate-700">
+                            <div class="flex justify-between py-1 border-b border-slate-700">
                                 <span class="text-slate-400">Min Floor Area Required:</span>
-                                <span class="font-semibold text-slate-200" id="res_oh_area">9.79 m²</span>
+                                <span class="font-semibold text-slate-200" id="res_oh_area">14.79 m²</span>
                             </div>
                         </div>
                     </div>
@@ -415,7 +445,7 @@
                     <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
                         <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Suggested Internal Dimensions (Square Tank)</span>
                         <div class="text-sm font-mono text-blue-300 font-medium" id="res_oh_dims">
-                            Length: 3.13 m × Width: 3.13 m × Height: 2.00 m
+                            Length: 3.85 m × Width: 3.85 m × Height: 2.00 m
                         </div>
                     </div>
                 </div>
@@ -427,7 +457,7 @@
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <h3 class="font-bold text-white text-base">Pump Head & Motor Power Sizing</h3>
-                        <p class="text-xs text-slate-400">Transfer Pump Sizing (Underground Tank to Terrace Overhead Tank)</p>
+                        <p class="text-xs text-slate-400">Domestic Transfer Pump Sizing (Underground Tank to Terrace Overhead Tank)</p>
                     </div>
                     <span class="text-xs bg-purple-950 text-purple-300 font-semibold px-2.5 py-1 rounded border border-purple-800">Hydraulic Design</span>
                 </div>
@@ -459,7 +489,7 @@
 
     <!-- Footer -->
     <footer class="bg-slate-950 border-t border-slate-800 py-4 text-center text-xs text-slate-400 no-print mt-8">
-        <p>Built for MEP/PHE Professional Design Calculations &bull; Reference: National Building Code of India (NBC 2016)</p>
+        <p>Built for MEP/PHE Professional Design Calculations &bull; Reference: National Building Code of India (NBC 2016 Part 4 & 9)</p>
     </footer>
 
     <!-- Calculation Engine Script -->
@@ -473,6 +503,42 @@
                 document.getElementById('panel_' + p).classList.add('hidden');
             });
             document.getElementById('panel_' + occ).classList.remove('hidden');
+        }
+
+        // NBC 2016 Part 4 Table 7 Fire Water Storage Lookup function
+        function getNbcFireWater(occ, height) {
+            let ug = 50000;
+            let terrace = 10000;
+
+            if (occ === 'residential') {
+                if (height < 15) { ug = 25000; terrace = 5000; }
+                else if (height <= 35) { ug = 50000; terrace = 10000; }
+                else if (height <= 45) { ug = 100000; terrace = 10000; }
+                else if (height <= 60) { ug = 150000; terrace = 10000; }
+                else { ug = 200000; terrace = 10000; }
+            } 
+            else if (occ === 'office') {
+                if (height < 15) { ug = 50000; terrace = 10000; }
+                else if (height <= 24) { ug = 100000; terrace = 10000; }
+                else if (height <= 30) { ug = 150000; terrace = 20000; }
+                else { ug = 200000; terrace = 20000; }
+            }
+            else if (occ === 'hospital') {
+                if (height < 15) { ug = 75000; terrace = 10000; }
+                else if (height <= 24) { ug = 150000; terrace = 20000; }
+                else { ug = 200000; terrace = 20000; }
+            }
+            else if (occ === 'hotel') {
+                if (height < 15) { ug = 100000; terrace = 10000; }
+                else if (height <= 30) { ug = 150000; terrace = 20000; }
+                else { ug = 250000; terrace = 20000; }
+            }
+            else {
+                // Educational, Mercantile, Assembly, etc.
+                if (height < 15) { ug = 50000; terrace = 10000; }
+                else { ug = 100000; terrace = 10000; }
+            }
+            return { ug, terrace };
         }
 
         function calculatePHE() {
@@ -508,82 +574,54 @@
             } 
             else if (occ === 'office') {
                 const area = parseFloat(document.getElementById('office_area').value) || 0;
-                // NBC Rule: 1 person per 10 m² of floor area
                 totalPop = Math.ceil(area / 10);
                 document.getElementById('pop_office_calc').innerText = totalPop;
-                lpcd = 45; // Offices standard NBC rate
-                flushRate = 20;
-                drinkRate = 0;
-                domesticRate = 25;
+                lpcd = 45; flushRate = 20; drinkRate = 0; domesticRate = 25;
             }
             else if (occ === 'hospital') {
                 const beds = parseInt(document.getElementById('hosp_beds').value) || 0;
                 const staff = parseInt(document.getElementById('hosp_staff').value) || 0;
                 const density = parseInt(document.getElementById('hosp_tier').value) || 5;
-                // NBC Rule: Beds + Staff + (Beds * density for attendants)
                 totalPop = beds + staff + (beds * density);
                 document.getElementById('pop_hosp_calc').innerText = totalPop;
-                lpcd = beds > 100 ? 450 : 340; // 340 for <=100 beds, 450 for >100 beds
-                flushRate = 110;
-                drinkRate = 0;
-                domesticRate = lpcd - flushRate;
+                lpcd = beds > 100 ? 450 : 340; flushRate = 110; drinkRate = 0; domesticRate = lpcd - flushRate;
             }
             else if (occ === 'hotel') {
                 const beds = parseInt(document.getElementById('hotel_beds').value) || 0;
                 const staff = parseInt(document.getElementById('hotel_staff').value) || 0;
                 const seats = parseInt(document.getElementById('hotel_seats').value) || 0;
-                // NBC Rule: Beds + Staff + restaurant seats requirement
                 totalPop = beds + staff + seats;
                 document.getElementById('pop_hotel_calc').innerText = totalPop;
-                lpcd = 180; // Standard hotel rate
-                flushRate = 60;
-                drinkRate = 0;
-                domesticRate = lpcd - flushRate;
+                lpcd = 180; flushRate = 60; drinkRate = 0; domesticRate = lpcd - flushRate;
             }
             else if (occ === 'hostel') {
                 const beds = parseInt(document.getElementById('hostel_beds').value) || 0;
                 const warden = parseInt(document.getElementById('hostel_warden').value) || 0;
                 const staff = parseInt(document.getElementById('hostel_staff').value) || 0;
-                // NBC Rule: Beds + 4.5 * (warden's residence) + staff
                 totalPop = Math.ceil(beds + (4.5 * warden) + staff);
                 document.getElementById('pop_hostel_calc').innerText = totalPop;
-                lpcd = 135;
-                flushRate = 45;
-                drinkRate = 20;
-                domesticRate = 70;
+                lpcd = 135; flushRate = 45; drinkRate = 20; domesticRate = 70;
             }
             else if (occ === 'school') {
                 const strength = parseInt(document.getElementById('school_strength').value) || 0;
                 const staff = parseInt(document.getElementById('school_staff').value) || 0;
-                // NBC Rule: Strength of school + Teaching and non-teaching staff
                 totalPop = strength + staff;
                 document.getElementById('pop_school_calc').innerText = totalPop;
-                lpcd = 45; // Day school rate
-                flushRate = 20;
-                drinkRate = 0;
-                domesticRate = 25;
+                lpcd = 45; flushRate = 20; drinkRate = 0; domesticRate = 25;
             }
             else if (occ === 'mercantile') {
                 const groundArea = parseFloat(document.getElementById('merc_ground_area').value) || 0;
                 const upperArea = parseFloat(document.getElementById('merc_upper_area').value) || 0;
-                // NBC Rule: 1 person per 3m² street/sales basement + 1 person per 6m² upper floors
                 totalPop = Math.ceil((groundArea / 3) + (upperArea / 6));
                 document.getElementById('pop_merc_calc').innerText = totalPop;
-                lpcd = 45; // Mercantile rate
-                flushRate = 15;
-                drinkRate = 0;
-                domesticRate = 30;
+                lpcd = 45; flushRate = 15; drinkRate = 0; domesticRate = 30;
             }
             else if (occ === 'traffic') {
                 const annualTraffic = parseFloat(document.getElementById('traffic_annual').value) || 0;
                 const staff = parseFloat(document.getElementById('traffic_staff').value) || 0;
-                // NBC Rule: (Annual passenger traffic / 365) + Staff + Vendors
                 totalPop = Math.ceil((annualTraffic / 365) + staff);
                 document.getElementById('pop_traffic_calc').innerText = totalPop.toLocaleString('en-IN');
-                lpcd = 15; // Traffic terminal rate (shorter duration users)
-                flushRate = 5;
-                drinkRate = 0;
-                domesticRate = 10;
+                lpcd = 15; flushRate = 5; drinkRate = 0; domesticRate = 10;
             }
 
             document.getElementById('disp_rate_summary').innerText = lpcd;
@@ -599,17 +637,36 @@
             document.getElementById('split_drinking').innerText = drinkTotal.toLocaleString('en-IN') + ' L';
             document.getElementById('split_domestic').innerText = domesticTotal.toLocaleString('en-IN') + ' L';
 
-            // Storage Sizing (UG Tank = 2 Days, OH Tank = 1 Day)
-            const ugVol = dailyDemand * 2;
-            const ohVol = dailyDemand * 1;
+            // Domestic Storage Sizing (UG = 2 Days, OH = 1 Day)
+            const domUgVol = dailyDemand * 2;
+            const domOhVol = dailyDemand * 1;
+
+            // Fire Water Sizing (NBC Table 7)
+            const bldgHeight = parseFloat(document.getElementById('bldg_height').value) || 45.0;
+            const standardFire = getNbcFireWater(occ, bldgHeight);
+
+            const overrideUgFire = parseFloat(document.getElementById('override_ug_fire').value);
+            const overrideTerraceFire = parseFloat(document.getElementById('override_terrace_fire').value);
+
+            const fireUgVol = !isNaN(overrideUgFire) ? overrideUgFire : standardFire.ug;
+            const fireTerraceVol = !isNaN(overrideTerraceFire) ? overrideTerraceFire : standardFire.terrace;
+
+            // Combined Volumes
+            const ugVol = domUgVol + fireUgVol;
+            const ohVol = domOhVol + fireTerraceVol;
+
+            document.getElementById('res_ug_dom').innerText = domUgVol.toLocaleString('en-IN') + ' L';
+            document.getElementById('res_ug_fire').innerText = fireUgVol.toLocaleString('en-IN') + ' L';
+            document.getElementById('res_ug_vol').innerText = ugVol.toLocaleString('en-IN') + ' Liters';
+
+            document.getElementById('res_oh_dom').innerText = domOhVol.toLocaleString('en-IN') + ' L';
+            document.getElementById('res_oh_fire').innerText = fireTerraceVol.toLocaleString('en-IN') + ' L';
+            document.getElementById('res_oh_vol').innerText = ohVol.toLocaleString('en-IN') + ' Liters';
 
             const ugM3 = ugVol / 1000;
             const ohM3 = ohVol / 1000;
 
-            document.getElementById('res_ug_vol').innerText = ugVol.toLocaleString('en-IN') + ' Liters';
             document.getElementById('res_ug_m3').innerText = ugM3.toFixed(2) + ' m³';
-
-            document.getElementById('res_oh_vol').innerText = ohVol.toLocaleString('en-IN') + ' Liters';
             document.getElementById('res_oh_m3').innerText = ohM3.toFixed(2) + ' m³';
 
             // Tank Dimensions & Footprint Area
@@ -629,7 +686,6 @@
             document.getElementById('res_oh_dims').innerText = `Length: ${ohSide.toFixed(2)} m × Width: ${ohSide.toFixed(2)} m × Height: ${ohHeight.toFixed(2)} m`;
 
             // Pump Sizing
-            const bldgHeight = parseFloat(document.getElementById('bldg_height').value) || 45.0;
             const ugDepth = parseFloat(document.getElementById('ug_depth').value) || 3.0;
             const frictionPct = parseFloat(document.getElementById('friction_pct').value) || 15;
             const pumpHours = parseFloat(document.getElementById('pump_hours').value) || 4.0;
@@ -642,7 +698,8 @@
             document.getElementById('res_friction_loss').innerText = frictionLoss.toFixed(2) + ' m';
             document.getElementById('res_tmh').innerText = tmh.toFixed(2) + ' m';
 
-            const flowLpm = ohVol / (pumpHours * 60);
+            // Flow based on domestic overhead tank requirement
+            const flowLpm = domOhVol / (pumpHours * 60);
             const qM3s = (flowLpm / 1000) / 60;
             const hydraulicKw = (qM3s * 1000 * 9.81 * tmh) / 1000;
             const shaftKw = hydraulicKw / 0.425;
